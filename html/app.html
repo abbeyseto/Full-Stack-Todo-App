@@ -40,7 +40,6 @@ All the APIs for this todos application Currently we support the following 3 con
 4. **set_completed_todo** - called to set a todo as completed
 &#34;&#34;&#34;
 
-
 from flask import Flask, jsonify, request, render_template, redirect, url_for, abort
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
@@ -59,11 +58,22 @@ class Todo(db.Model):
     __tablename__ = &#39;todos&#39;
     id = db.Column(db.Integer, primary_key=True)
     description = db.Column(db.String(), nullable=False)
-    completed = db.Column(db.Boolean, nullable=False)
+    completed = db.Column(db.Boolean, nullable=False, default=False)
+    list_id = db.Column(db.Integer, db.ForeignKey(&#39;todolists.id&#39;), nullable=False)
 
     def __repr__(self):
         return f&#39;&lt;Todo {self.id} {self.description}&gt;&#39;
 
+class TodoList(db.Model):
+    __tablename__ = &#39;todolists&#39;
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(), nullable=False)
+    todos = db.relationship(&#39;Todo&#39;, backref=&#39;list&#39;, lazy=True)
+    user_id = db.Column(db.Integer, db.ForeignKey(&#39;user.id&#39;), nullable=False)
+    completed = db.Column(db.Boolean, nullable=False, default=False)
+
+    def __repr__(self):
+        return f&#39;&lt;TodoList {self.id} {self.description}&gt;&#39;
 
 class User(db.Model):
     __tablename__ = &#39;user&#39;
@@ -74,7 +84,8 @@ class User(db.Model):
     image = db.Column(db.LargeBinary)
     password = db.Column(db.String(), nullable=False)
     created_at = db.Column(db.DateTime(), nullable=False)
-
+    user_list = db.relationship(&#39;TodoList&#39;, backref=&#39;userlist&#39;, lazy=True)
+    
     def __repr__(self):
         return f&#39;&lt;Person ID: {self.id}, name: {self.first_name}&gt;&#39;
 
@@ -268,7 +279,8 @@ for example, any mapped columns or relationships.</p></section>
     __tablename__ = &#39;todos&#39;
     id = db.Column(db.Integer, primary_key=True)
     description = db.Column(db.String(), nullable=False)
-    completed = db.Column(db.Boolean, nullable=False)
+    completed = db.Column(db.Boolean, nullable=False, default=False)
+    list_id = db.Column(db.Integer, db.ForeignKey(&#39;todolists.id&#39;), nullable=False)
 
     def __repr__(self):
         return f&#39;&lt;Todo {self.id} {self.description}&gt;&#39;</code></pre>
@@ -334,6 +346,171 @@ for example, any mapped columns or relationships.</p></section>
         return self.impl.get(instance_state(instance), dict_)</code></pre>
 </details>
 </dd>
+<dt id="app.Todo.list_id"><code class="name">var <span class="ident">list_id</span></code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def __get__(self, instance, owner):
+    if instance is None:
+        return self
+
+    dict_ = instance_dict(instance)
+    if self._supports_population and self.key in dict_:
+        return dict_[self.key]
+    else:
+        return self.impl.get(instance_state(instance), dict_)</code></pre>
+</details>
+</dd>
+</dl>
+</dd>
+<dt id="app.TodoList"><code class="flex name class">
+<span>class <span class="ident">TodoList</span></span>
+<span>(</span><span>**kwargs)</span>
+</code></dt>
+<dd>
+<section class="desc"><p>Base class for SQLAlchemy declarative base model.</p>
+<p>To define models, subclass :attr:<code>db.Model &lt;SQLAlchemy.Model&gt;</code>, not this
+class. To customize <code>db.Model</code>, subclass this and pass it as
+<code>model_class</code> to :class:<code>SQLAlchemy</code>.</p>
+<p>A simple constructor that allows initialization from kwargs.</p>
+<p>Sets attributes on the constructed instance using the names and
+values in <code>kwargs</code>.</p>
+<p>Only keys that are present as
+attributes of the instance's class are allowed. These could be,
+for example, any mapped columns or relationships.</p></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">class TodoList(db.Model):
+    __tablename__ = &#39;todolists&#39;
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(), nullable=False)
+    todos = db.relationship(&#39;Todo&#39;, backref=&#39;list&#39;, lazy=True)
+    user_id = db.Column(db.Integer, db.ForeignKey(&#39;user.id&#39;), nullable=False)
+    completed = db.Column(db.Boolean, nullable=False, default=False)
+
+    def __repr__(self):
+        return f&#39;&lt;TodoList {self.id} {self.description}&gt;&#39;</code></pre>
+</details>
+<h3>Ancestors</h3>
+<ul class="hlist">
+<li>sqlalchemy.ext.declarative.api.Model</li>
+<li>flask_sqlalchemy.model.Model</li>
+</ul>
+<h3>Instance variables</h3>
+<dl>
+<dt id="app.TodoList.completed"><code class="name">var <span class="ident">completed</span></code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def __get__(self, instance, owner):
+    if instance is None:
+        return self
+
+    dict_ = instance_dict(instance)
+    if self._supports_population and self.key in dict_:
+        return dict_[self.key]
+    else:
+        return self.impl.get(instance_state(instance), dict_)</code></pre>
+</details>
+</dd>
+<dt id="app.TodoList.id"><code class="name">var <span class="ident">id</span></code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def __get__(self, instance, owner):
+    if instance is None:
+        return self
+
+    dict_ = instance_dict(instance)
+    if self._supports_population and self.key in dict_:
+        return dict_[self.key]
+    else:
+        return self.impl.get(instance_state(instance), dict_)</code></pre>
+</details>
+</dd>
+<dt id="app.TodoList.name"><code class="name">var <span class="ident">name</span></code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def __get__(self, instance, owner):
+    if instance is None:
+        return self
+
+    dict_ = instance_dict(instance)
+    if self._supports_population and self.key in dict_:
+        return dict_[self.key]
+    else:
+        return self.impl.get(instance_state(instance), dict_)</code></pre>
+</details>
+</dd>
+<dt id="app.TodoList.todos"><code class="name">var <span class="ident">todos</span></code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def __get__(self, instance, owner):
+    if instance is None:
+        return self
+
+    dict_ = instance_dict(instance)
+    if self._supports_population and self.key in dict_:
+        return dict_[self.key]
+    else:
+        return self.impl.get(instance_state(instance), dict_)</code></pre>
+</details>
+</dd>
+<dt id="app.TodoList.user_id"><code class="name">var <span class="ident">user_id</span></code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def __get__(self, instance, owner):
+    if instance is None:
+        return self
+
+    dict_ = instance_dict(instance)
+    if self._supports_population and self.key in dict_:
+        return dict_[self.key]
+    else:
+        return self.impl.get(instance_state(instance), dict_)</code></pre>
+</details>
+</dd>
+<dt id="app.TodoList.userlist"><code class="name">var <span class="ident">userlist</span></code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def __get__(self, instance, owner):
+    if instance is None:
+        return self
+
+    dict_ = instance_dict(instance)
+    if self._supports_population and self.key in dict_:
+        return dict_[self.key]
+    else:
+        return self.impl.get(instance_state(instance), dict_)</code></pre>
+</details>
+</dd>
 </dl>
 </dd>
 <dt id="app.User"><code class="flex name class">
@@ -364,7 +541,8 @@ for example, any mapped columns or relationships.</p></section>
     image = db.Column(db.LargeBinary)
     password = db.Column(db.String(), nullable=False)
     created_at = db.Column(db.DateTime(), nullable=False)
-
+    user_list = db.relationship(&#39;TodoList&#39;, backref=&#39;userlist&#39;, lazy=True)
+    
     def __repr__(self):
         return f&#39;&lt;Person ID: {self.id}, name: {self.first_name}&gt;&#39;</code></pre>
 </details>
@@ -501,6 +679,24 @@ for example, any mapped columns or relationships.</p></section>
         return self.impl.get(instance_state(instance), dict_)</code></pre>
 </details>
 </dd>
+<dt id="app.User.user_list"><code class="name">var <span class="ident">user_list</span></code></dt>
+<dd>
+<section class="desc"></section>
+<details class="source">
+<summary>
+<span>Expand source code</span>
+</summary>
+<pre><code class="python">def __get__(self, instance, owner):
+    if instance is None:
+        return self
+
+    dict_ = instance_dict(instance)
+    if self._supports_population and self.key in dict_:
+        return dict_[self.key]
+    else:
+        return self.impl.get(instance_state(instance), dict_)</code></pre>
+</details>
+</dd>
 </dl>
 </dd>
 </dl>
@@ -528,6 +724,18 @@ for example, any mapped columns or relationships.</p></section>
 <li><code><a title="app.Todo.completed" href="#app.Todo.completed">completed</a></code></li>
 <li><code><a title="app.Todo.description" href="#app.Todo.description">description</a></code></li>
 <li><code><a title="app.Todo.id" href="#app.Todo.id">id</a></code></li>
+<li><code><a title="app.Todo.list_id" href="#app.Todo.list_id">list_id</a></code></li>
+</ul>
+</li>
+<li>
+<h4><code><a title="app.TodoList" href="#app.TodoList">TodoList</a></code></h4>
+<ul class="two-column">
+<li><code><a title="app.TodoList.completed" href="#app.TodoList.completed">completed</a></code></li>
+<li><code><a title="app.TodoList.id" href="#app.TodoList.id">id</a></code></li>
+<li><code><a title="app.TodoList.name" href="#app.TodoList.name">name</a></code></li>
+<li><code><a title="app.TodoList.todos" href="#app.TodoList.todos">todos</a></code></li>
+<li><code><a title="app.TodoList.user_id" href="#app.TodoList.user_id">user_id</a></code></li>
+<li><code><a title="app.TodoList.userlist" href="#app.TodoList.userlist">userlist</a></code></li>
 </ul>
 </li>
 <li>
@@ -540,6 +748,7 @@ for example, any mapped columns or relationships.</p></section>
 <li><code><a title="app.User.image" href="#app.User.image">image</a></code></li>
 <li><code><a title="app.User.last_name" href="#app.User.last_name">last_name</a></code></li>
 <li><code><a title="app.User.password" href="#app.User.password">password</a></code></li>
+<li><code><a title="app.User.user_list" href="#app.User.user_list">user_list</a></code></li>
 </ul>
 </li>
 </ul>

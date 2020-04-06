@@ -7,12 +7,12 @@ All the APIs for this todos application Currently we support the following 3 con
 4. **set_completed_todo** - called to set a todo as completed
 """
 
-
 from flask import Flask, jsonify, request, render_template, redirect, url_for, abort
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import sys
 from flask_migrate import Migrate
+import pytest
 
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://AshNelson:ologinahtti1@localhost:5432/todoapp'
@@ -116,5 +116,12 @@ def index():
     return render_template('index.html', todos=Todo.query.order_by('id').all())
 
 
+def f():
+    raise SystemExit(1)
+
+
+def test_mytest():
+    with pytest.raises(SystemExit):
+        f()
 if __name__ == '__main__':
     app.run()
