@@ -1,3 +1,13 @@
+"""
+All the APIs for this todos application Currently we support the following 3 controllers:
+
+1. **index** - The main view for Todos
+2. **create_todo** - called to add a new todo
+3. **delete_todo** - called to delete todo
+4. **set_completed_todo** - called to set a todo as completed
+"""
+
+
 from flask import Flask, jsonify, request, render_template, redirect, url_for, abort
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
@@ -16,11 +26,22 @@ class Todo(db.Model):
     __tablename__ = 'todos'
     id = db.Column(db.Integer, primary_key=True)
     description = db.Column(db.String(), nullable=False)
-    completed = db.Column(db.Boolean, nullable=False)
+    completed = db.Column(db.Boolean, nullable=False, default=False)
+    list_id = db.Column(db.Integer, db.ForeignKey('todolists.id'), nullable=False)
 
     def __repr__(self):
         return f'<Todo {self.id} {self.description}>'
 
+class TodoList(db.Model):
+    __tablename__ = 'todolists'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(), nullable=False)
+    todos = db.relationship('Todo', backref='list', lazy=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    completed = db.Column(db.Boolean, nullable=False, default=False)
+
+    def __repr__(self):
+        return f'<TodoList {self.id} {self.description}>'
 
 class User(db.Model):
     __tablename__ = 'user'
@@ -31,7 +52,8 @@ class User(db.Model):
     image = db.Column(db.LargeBinary)
     password = db.Column(db.String(), nullable=False)
     created_at = db.Column(db.DateTime(), nullable=False)
-
+    user_list = db.relationship('TodoList', backref='userlist', lazy=True)
+    
     def __repr__(self):
         return f'<Person ID: {self.id}, name: {self.first_name}>'
 
