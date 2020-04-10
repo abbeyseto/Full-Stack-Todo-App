@@ -51,46 +51,48 @@
 
 <body>
     {% for u in user %}
-        <h3>Welcome {{ u.first_name }} !</h3>
-        {% endfor %}
+    <h3 id="{{u.id}}" class="user">Welcome {{ u.first_name }} !</h3>
+    {% endfor %}
 
     <div class="lists-wrapper">
-        <form id="form">
+        <form id="list" class="form">
             <input type="text" id="name" name="name" required />
             <input type="submit" value="Create" />
         </form>
+        <div id="list-error" class="hidden">Something went wrong</div>
         <ul id="lists">
             {% for list in lists %}
             <a href="/lists/{{ list.id }}">
                 <li>
-                    <input class="check-completed" data-id="{{ list.id }}" type="checkbox" {% if list.completed %}
-                        checked {% endif %} />{{list.name}}<i class="delete material-icons md-18 orange600"
+                    <input class="check-completed check-list" data-id="{{ list.id }}" type="checkbox" {% if list.completed %}
+                        checked {% endif %} />{{list.name}}<i class="delete delete-list material-icons md-18 orange600"
                         data-id="{{ list.id }}">delete</i>
                 </li>
                 {% endfor %}
             </a>
         </ul>
     </div>
-
+    {% if lists %}
     <div class="todos-wrapper">
-        <h4>{{ active_list.name }}</h4>
-        <form id="form">
+        <h4 id="{{active_list.id}}" class="active-list">{{ active_list.name }}</h4>
+        <form id="todo" class="form">
             <input type="text" id="description" name="description" required />
             <input type="submit" value="Create" />
         </form>
 
-        <div id="error" class="hidden">Something went wrong</div>
+        <div id="todo-error" class="hidden">Something went wrong</div>
         <ul id="todos">
             {% for todo in todos %}
             <li>
-                <input class="check-completed" data-id="{{ todo.id }}" type="checkbox" {% if todo.completed %} checked
+                <input class="check-completed check-todo" data-id="{{ todo.id }}" type="checkbox" {% if todo.completed %} checked
                     {% endif %} />
                 {{ todo.description }}
-                <i class="delete material-icons md-18 orange600" data-id="{{ todo.id }}">delete</i>
+                <i class="delete delete-todo material-icons md-18 orange600" data-id="{{ todo.id }}">delete</i>
             </li>
             {% endfor %}
         </ul>
     </div>
+    {% endif %}
 
 
     <script>
@@ -98,10 +100,12 @@
         for (let i = 0; i < checkboxes.length; i++) {
             const checkbox = checkboxes[i];
             checkbox.onchange = (e) => {
-                console.log('event is ', e);
                 const newCompleted = e.target.checked;
-                const todoId = e.target.dataset['id'];
-                fetch('/todos/' + todoId + '/set-completed', {
+                const id = e.target.dataset['id'];
+                let errorClass = e.target.className.includes('check-todo') ? 'todo-error' : 'list-error';
+                let url = e.target.className.includes('check-todo') ? '/todos/': '/lists/'
+                console.log(id, url);
+                fetch(url + id + '/set-completed', {
                     method: 'POST', // or 'PUT'
                     headers: {
                         'Content-Type': 'application/json',
@@ -110,9 +114,10 @@
                         'completed': newCompleted
                     }),
                 }).then(() => {
-                    document.getElementById('error').className = 'hidden';
+                    document.getElementById(`${errorClass}`).className = 'hidden';
+                    window.location.href = "/";
                 }).catch(err => {
-                    document.getElementById('error').className = '';
+                    document.getElementById(`${errorClass}`).className = '';
                 })
             }
         }
@@ -121,44 +126,62 @@
         for (let i = 0; i < deleteIcons.length; i++) {
             const deleted = deleteIcons[i];
             deleted.onclick = (e) => {
-                console.log('event is ', e);
                 const newCompleted = e.target.checked;
-                const todoId = e.target.dataset['id'];
-                fetch('/todos/' + todoId, {
-                    method: 'DELETE', // or 'PUT'
+                let errorClass = e.target.className.includes('delete-todo') ? 'todo-error' : 'list-error';
+                const id = e.target.dataset['id'];
+                let url = e.target.className.includes('delete-todo') ? '/todos/': '/lists/'
+                console.log(id, url);
+                fetch(url + id, {
+                    method: 'DELETE', 
                     headers: {
                         'Content-Type': 'application/json',
                     }
                 }).then(() => {
-                    document.getElementById('error').className = 'hidden';
+                    document.getElementById(`${errorClass}`).className = 'hidden';
                     window.location.href = "/";
                 }).catch(err => {
-                    document.getElementById('error').className = '';
+                    document.getElementById(`${errorClass}`).className = '';
                 })
             }
         }
 
-        document.getElementById('form').onsubmit = function (e) {
-            e.preventDefault();
-            fetch('/todos/create', {
-                method: 'POST', // or 'PUT'
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    'description': document.getElementById('description').value
-                }),
-            }).then(response => response.json()).then(resp => {
-                console.log(resp);
-                const liItem = document.createElement('LI');
-                liItem.innerHTML = resp['description'];
-                document.getElementById('todos').appendChild(liItem);
-                document.getElementById('description').value = "";
-                document.getElementById('error').className = 'hidden';
-            }).catch(err => {
-                document.getElementById('error').className = '';
+        document.querySelectorAll('.form').forEach(item => {
+            item.addEventListener('submit', e => {
+                //handle click
+                e.preventDefault();
+                let url = e.target.id === 'todo' ? '/todos/create' : '/lists/create';
+                let errorClass = e.target.id === 'todo' ? 'todo-error' : 'list-error';
+                let payload = e.target.id === 'todo' ? (
+                    { 'description': document.getElementById('description').value, 'list_id': parseInt(document.getElementsByClassName('active-list')[0].id) }
+                ) : (
+                        {
+                            'name': document.getElementById('name').value,
+                            'user_id': parseInt(document.getElementsByClassName('user')[0].id)
+                        }
+                    );
+                let newItemField = e.target.firstElementChild.name;
+                let typeOfList = e.target.id;
+                console.log(url, payload, typeOfList,newItemField);
+                fetch(url, {
+                    method: 'POST', // or 'PUT'
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(payload),
+                }).then(response => response.json()).then(resp => {
+                    console.log(resp);
+                    // const liItem = document.createElement('LI');
+                    // liItem.innerHTML = resp[`${newItemField}`];
+                    // console.log('List to be appended',resp[`${newItemField}`], typeOfList)
+                    // document.getElementById(typeOfList).appendChild(liItem);
+                    // document.getElementById(`${newItemField}`).value = "";
+                    document.getElementById(`${errorClass}`).className = 'hidden';
+                    window.location.href = "/";
+                }).catch(err => {
+                    document.getElementById(`${errorClass}`).className = '';
+                })
             })
-        }
+        })
     </script>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 
