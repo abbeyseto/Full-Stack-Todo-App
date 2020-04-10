@@ -95,7 +95,30 @@ def create_todo():
     else:
         return jsonify(body)
 
-
+@app.route('/lists/create', methods=['POST'])
+def create_list():
+    error = False
+    body = {}
+    try:
+        name = request.get_json()['name']
+        user_id = request.get_json()['user_id']
+        todolist = TodoList(name=name, user_id=user_id,completed=False)
+        db.session.add(todolist)
+        db.session.commit()
+        body['id'] = todolist.id
+        body['completed'] = todolist.completed
+        body['name'] = todolist.name
+    except:
+        error = True
+        db.session.rollback()
+        print(sys.exc_info())
+    finally:
+        db.session.close()
+    if error:
+        abort(400)
+    else:
+        return jsonify(body)
+        
 @app.route('/todos/<todo_id>/set-completed', methods=['POST'])
 def set_completed_todo(todo_id):
     try:
@@ -111,10 +134,13 @@ def set_completed_todo(todo_id):
     return render_template('index.html')
 
 
-@app.route('/lists//<list_id>')
+@app.route('/lists/<list_id>')
 def get_list_todos(list_id):
     return render_template('index.html', 
-    data=Todo.query.filter_by(list_id=list_id).order_by('id').all())
+    user = User.query.filter_by(id=1).all(),
+    lists = TodoList.query.all(),
+    active_list=TodoList.query.get(list_id),
+    todos=Todo.query.filter_by(list_id=list_id).order_by('id').all())
 
 @app.route('/')
 def index():

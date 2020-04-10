@@ -9,6 +9,7 @@
         list-style: none;
         padding: 0;
         margin: 0;
+        width: 300px;
     }
 
     li {
@@ -24,8 +25,16 @@
         cursor: pointer;
         font-size: 20px;
     }
-    .material-icons.orange600 { color: red;cursor: pointer; }
-    .material-icons.md-18 { font-size: 18px; }
+
+    .material-icons.orange600 {
+        color: red;
+        cursor: pointer;
+    }
+
+    .material-icons.md-18 {
+        font-size: 18px;
+    }
+
     .lists-wrapper,
     .todos-wrapper {
         display: inline-block;
@@ -41,24 +50,48 @@
 </head>
 
 <body>
-
-    <form id="form">
-        <input type="text" id="description" name="description" required/>
-        <input type="submit" value="Create" />
-    </form>
-
-    <div id="error" class="hidden">Something went wrong</div>
-
-    <ul id="todos">
-        {% for todo in todos %}
-        <li>
-            <input class="check-completed" data-id="{{ todo.id }}" type="checkbox" {% if todo.completed %} checked
-                {% endif %} />
-            {{ todo.description }}
-            <i class="delete material-icons md-18 orange600" data-id="{{ todo.id }}">delete</i>
-        </li>
+    {% for u in user %}
+        <h3>Welcome {{ u.first_name }} !</h3>
         {% endfor %}
-    </ul>
+
+    <div class="lists-wrapper">
+        <form id="form">
+            <input type="text" id="name" name="name" required />
+            <input type="submit" value="Create" />
+        </form>
+        <ul id="lists">
+            {% for list in lists %}
+            <a href="/lists/{{ list.id }}">
+                <li>
+                    <input class="check-completed" data-id="{{ list.id }}" type="checkbox" {% if list.completed %}
+                        checked {% endif %} />{{list.name}}<i class="delete material-icons md-18 orange600"
+                        data-id="{{ list.id }}">delete</i>
+                </li>
+                {% endfor %}
+            </a>
+        </ul>
+    </div>
+
+    <div class="todos-wrapper">
+        <h4>{{ active_list.name }}</h4>
+        <form id="form">
+            <input type="text" id="description" name="description" required />
+            <input type="submit" value="Create" />
+        </form>
+
+        <div id="error" class="hidden">Something went wrong</div>
+        <ul id="todos">
+            {% for todo in todos %}
+            <li>
+                <input class="check-completed" data-id="{{ todo.id }}" type="checkbox" {% if todo.completed %} checked
+                    {% endif %} />
+                {{ todo.description }}
+                <i class="delete material-icons md-18 orange600" data-id="{{ todo.id }}">delete</i>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+
 
     <script>
         const checkboxes = document.querySelectorAll('.check-completed');
@@ -91,7 +124,7 @@
                 console.log('event is ', e);
                 const newCompleted = e.target.checked;
                 const todoId = e.target.dataset['id'];
-                fetch('/todos/' + todoId , {
+                fetch('/todos/' + todoId, {
                     method: 'DELETE', // or 'PUT'
                     headers: {
                         'Content-Type': 'application/json',
