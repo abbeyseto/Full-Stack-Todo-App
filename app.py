@@ -13,11 +13,22 @@ from datetime import datetime
 import sys
 from flask_migrate import Migrate
 import pytest
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
+# CORS(app, resources={r"*/api/*": {"origins":"*"}})
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://AshNelson:ologinahtti1@localhost:5432/todoapp'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
+
+
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control_Allow-Headers', 'Content-Type, Authorization')
+    response.headers.add('Access-Control_Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS')
+    return response
+
 
 migrate = Migrate(app, db)
 
@@ -63,7 +74,7 @@ class User(db.Model):
         return f'<Person ID: {self.id}, name: {self.first_name}>'
 
 
-@app.route('/todos/<todo_id>', methods=['DELETE'])
+@app.route('/todos/<int:todo_id>', methods=['DELETE'])
 def delete_todo(todo_id):
     try:
         Todo.query.filter_by(id=todo_id).delete()
@@ -75,7 +86,7 @@ def delete_todo(todo_id):
     return jsonify({'success': True})
 
 
-@app.route('/lists/<list_id>', methods=['DELETE'])
+@app.route('/lists/<int:list_id>', methods=['DELETE'])
 def delete_list(list_id):
     global list_location
     list_location = 1
@@ -144,7 +155,7 @@ def create_list():
         return jsonify(body)
 
 
-@app.route('/todos/<todo_id>/set-completed', methods=['POST'])
+@app.route('/todos/<int:todo_id>/set-completed', methods=['POST'])
 def set_completed_todo(todo_id):
     try:
         completed = request.get_json()['completed']
@@ -158,7 +169,7 @@ def set_completed_todo(todo_id):
         db.session.close()
     return render_template('index.html')
 
-@app.route('/lists/<list_id>/set-completed', methods=['POST'])
+@app.route('/lists/<int:list_id>/set-completed', methods=['POST'])
 def set_completed_list(list_id):
     try:
         completed = request.get_json()['completed']
@@ -177,7 +188,7 @@ def set_completed_list(list_id):
         db.session.close()
     return render_template('index.html')
 
-@app.route('/lists/<list_id>')
+@app.route('/lists/<int:list_id>')
 def get_list_todos(list_id):
     global list_location
     list_location = list_id
@@ -190,6 +201,7 @@ def get_list_todos(list_id):
 
 
 @app.route('/')
+# @cross_origin()
 def index():
     return redirect(url_for('get_list_todos', list_id=list_location))
 
