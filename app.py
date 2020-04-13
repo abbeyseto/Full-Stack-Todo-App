@@ -155,15 +155,17 @@ def login():
 
 @app.route('/authenticate')
 def authenticate():
+    headers = request.headers
+    print('HEADER IS', headers)
     code = request.args.get('code')
     url = "https://setoapps.auth0.com/oauth/token"
     payload = "grant_type=authorization_code&client_id=nO4zPv9ENUFZlmOf2jHuaNB8FwVIMqYh&client_secret=gLQUML4j199NYO0sDxE58Svp4-lvwoOrM9LKnrWva1Z0nCR0r7l-BgPsJI96hiuC&code=" + \
         code+"&redirect_uri=https://127.0.0.1:5000/lists/1&audience=todo"
     headers = {"Content-type": "application/x-www-form-urlencoded"}
     response = requests.post(url, data=payload, headers=headers)
+    reps = response.headers.json()
     data = response.json()
-    print(data)
-    print('TOKEN HERE', data.get('access_token'))
+    print('DATA',data, 'RESPONSE', reps)
     token = data.get('access_token')
     token_handling(token)
     return redirect(url_for('get_list_todos', list_id=list_location))
