@@ -40,6 +40,11 @@
         display: inline-block;
         vertical-align: top;
     }
+
+    .avatar {
+        width: 80px;
+        border-radius: 50%;
+    }
 </style>
 
 <head>
@@ -51,9 +56,13 @@
 
 <body>
     {% for u in user %}
-    <h3 id="{{u.id}}" class="user">Welcome {{ u.first_name }} !</h3>
+    <div class="logged-in-box auth0-box logged-in">
+        <img class="avatar" src="{{userinfo['picture']}}" />
+        <h2 class="user" id="{{u.id}}">Welcome {{userinfo['name']}}</h2>
+        <!-- <pre>{{userinfo_pretty}}</pre> -->
+        <a class="btn btn-primary btn-lg btn-logout btn-block" href="/logout">Logout</a>
+    </div>
     {% endfor %}
-
     <div class="lists-wrapper">
         <form id="list" class="form">
             <input type="text" id="name" name="name" required />
@@ -64,9 +73,9 @@
             {% for list in lists %}
             <a href="/lists/{{ list.id }}">
                 <li>
-                    <input class="check-completed check-list" data-id="{{ list.id }}" type="checkbox" {% if list.completed %}
-                        checked {% endif %} />{{list.name}}<i class="delete delete-list material-icons md-18 orange600"
-                        data-id="{{ list.id }}">delete</i>
+                    <input class="check-completed check-list" data-id="{{ list.id }}" type="checkbox"
+                        {% if list.completed %} checked {% endif %} />{{list.name}}<i
+                        class="delete delete-list material-icons md-18 orange600" data-id="{{ list.id }}">delete</i>
                 </li>
                 {% endfor %}
             </a>
@@ -84,8 +93,8 @@
         <ul id="todos">
             {% for todo in todos %}
             <li>
-                <input class="check-completed check-todo" data-id="{{ todo.id }}" type="checkbox" {% if todo.completed %} checked
-                    {% endif %} />
+                <input class="check-completed check-todo" data-id="{{ todo.id }}" type="checkbox"
+                    {% if todo.completed %} checked {% endif %} />
                 {{ todo.description }}
                 <i class="delete delete-todo material-icons md-18 orange600" data-id="{{ todo.id }}">delete</i>
             </li>
@@ -103,7 +112,7 @@
                 const newCompleted = e.target.checked;
                 const id = e.target.dataset['id'];
                 let errorClass = e.target.className.includes('check-todo') ? 'todo-error' : 'list-error';
-                let url = e.target.className.includes('check-todo') ? '/todos/': '/lists/'
+                let url = e.target.className.includes('check-todo') ? '/todos/' : '/lists/'
                 console.log(id, url);
                 fetch(url + id + '/set-completed', {
                     method: 'POST', // or 'PUT'
@@ -129,10 +138,10 @@
                 const newCompleted = e.target.checked;
                 let errorClass = e.target.className.includes('delete-todo') ? 'todo-error' : 'list-error';
                 const id = e.target.dataset['id'];
-                let url = e.target.className.includes('delete-todo') ? '/todos/': '/lists/'
+                let url = e.target.className.includes('delete-todo') ? '/todos/' : '/lists/'
                 console.log(id, url);
                 fetch(url + id, {
-                    method: 'DELETE', 
+                    method: 'DELETE',
                     headers: {
                         'Content-Type': 'application/json',
                     }
@@ -161,7 +170,7 @@
                     );
                 let newItemField = e.target.firstElementChild.name;
                 let typeOfList = e.target.id;
-                console.log(url, payload, typeOfList,newItemField);
+                console.log(url, payload, typeOfList, newItemField);
                 fetch(url, {
                     method: 'POST', // or 'PUT'
                     headers: {

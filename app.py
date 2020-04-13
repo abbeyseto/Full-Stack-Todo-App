@@ -6,33 +6,39 @@ All the APIs for this todos application Currently we support the following 3 con
 3. **delete_todo** - called to delete todo
 4. **set_completed_todo** - called to set a todo as completed
 """
-
-from flask import Flask, jsonify, request, render_template, redirect, url_for, abort
-from flask_sqlalchemy import SQLAlchemy
+from functools import wraps
+import json
+from os import environ as env
+from werkzeug.exceptions import HTTPException
+from dotenv import load_dotenv, find_dotenv
+from flask import Flask, jsonify, redirect, render_template, session, url_for, request, abort, _request_ctx_stack, session
+from authlib.integrations.flask_client import OAuth
+from six.moves.urllib.parse import urlencode
+from six.moves.urllib.request import urlopen
 from datetime import datetime
 import sys
-from flask_migrate import Migrate
 import pytest
-from flask_cors import CORS
+import http.client
+import requests
+from jose import jwt
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
+from flask_cors import CORS, cross_origin
+
+AUTH0_DOMAIN = 'setoapps.auth0.com'
+API_AUDIENCE = 'todo'
+ALGORITHMS = ["RS256"]
+list_location = 1
 
 app = Flask(__name__)
+app.secret_key = "iloveflask"
 CORS(app)
 # CORS(app, resources={r"*/api/*": {"origins":"*"}})
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://AshNelson:ologinahtti1@localhost:5432/todoapp'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+oauth = OAuth(app)
 db = SQLAlchemy(app)
-
-
-@app.after_request
-def after_request(response):
-    response.headers.add('Access-Control_Allow-Headers', 'Content-Type, Authorization')
-    response.headers.add('Access-Control_Allow-Methods', 'GET, POST, PATCH, DELETE, OPTIONS')
-    return response
-
-
 migrate = Migrate(app, db)
-
-list_location = 1
 
 
 class Todo(db.Model):
@@ -51,7 +57,6 @@ class TodoList(db.Model):
     __tablename__ = 'todolists'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(), nullable=False)
-    # todos = db.relationship('Todo', backref='list', primaryjoin="Todo.id==TodoList.id")
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     completed = db.Column(db.Boolean, nullable=False, default=False)
 
@@ -62,16 +67,121 @@ class TodoList(db.Model):
 class User(db.Model):
     __tablename__ = 'user'
     id = db.Column(db.Integer, primary_key=True)
-    first_name = db.Column(db.String(), nullable=False)
-    last_name = db.Column(db.String(), nullable=False)
-    email = db.Column(db.String(), nullable=False)
-    image = db.Column(db.LargeBinary)
-    password = db.Column(db.String(), nullable=False)
-    created_at = db.Column(db.DateTime(), nullable=False)
-    # user_list = db.relationship('TodoList', backref='userlist', primaryjoin="User.id==TodoList.id")
+    auth_id = db.Column(db.String(), nullable=False)
+    name = db.Column(db.String())
+    first_name = db.Column(db.String())
+    last_name = db.Column(db.String())
+    email = db.Column(db.String(), nullable=False, unique=True)
+    email_Verified = db.Column(db.Boolean, nullable=False, default=False)
+    image = db.Column(db.String())
+    created_at = db.Column(db.DateTime(), default=datetime.now())
+    updated_at = db.Column(db.DateTime(), default=datetime.now())
 
     def __repr__(self):
-        return f'<Person ID: {self.id}, name: {self.first_name}>'
+        return f'<User ID: {self.id}, name: {self.first_name}>'
+
+
+auth0 = oauth.register(
+    'auth0',
+    client_id='nO4zPv9ENUFZlmOf2jHuaNB8FwVIMqYh',
+    client_secret='gLQUML4j199NYO0sDxE58Svp4-lvwoOrM9LKnrWva1Z0nCR0r7l-BgPsJI96hiuC',
+    api_base_url='https://setoapps.auth0.com',
+    access_token_url='https://setoapps.auth0.com/oauth/token',
+    authorize_url='https://setoapps.auth0.com/authorize',
+    client_kwargs={
+        'scope': 'openid profile email',
+    },
+)
+
+
+@app.after_request
+def after_request(response):
+    response.headers.add('Access-Control_Allow-Headers',
+                         'Content-Type, Authorization')
+    response.headers.add('Access-Control_Allow-Methods',
+                         'GET, POST, PATCH, DELETE, OPTIONS')
+    return response
+
+
+@app.route('/')
+# @requires_auth
+@cross_origin()
+def index():
+    return redirect(url_for('get_list_todos', list_id=list_location))
+
+
+# Here we're using the /callback route.
+# @app.route('/callback')
+def token_handling(token):
+    # Handles response from token endpoint
+    url = "https://setoapps.auth0.com/userinfo"
+    headers = {"Authorization": "Bearer " + token + " "}
+    response = requests.post(url, headers=headers)
+    userinfo = response.json()
+    print(userinfo)
+    # Store the user information in flask session.
+    session['jwt_payload'] = userinfo
+    session['profile'] = {
+        'auth_id': userinfo['sub'],
+        'name': userinfo['name'],
+        'first_name': userinfo['given_name'],
+        'last_name': userinfo['family_name'],
+        'picture': userinfo['picture'],
+        'email': userinfo['email'],
+        'updated_at': userinfo['updated_at']
+    }
+    session['SECRET_KEY'] = userinfo['sub']
+    user = User.query.filter_by(email=session['profile']['email']).all()
+    if not user:
+        userProfile = session['profile']
+        newUser = User(auth_id=userProfile['auth_id'],
+                       name=userProfile['name'],
+                       first_name=userProfile['first_name'],
+                       last_name=userProfile['last_name'],
+                       email=userProfile['email'],
+                       image=userProfile['picture'],
+                       updated_at=userProfile['updated_at']
+                       )
+        db.session.add(newUser)
+        db.session.commit()
+    print(userinfo, session)
+    return redirect(url_for('get_list_todos', list_id=list_location))
+
+
+@app.route('/login')
+def login():
+    return redirect("https://setoapps.auth0.com/authorize?response_type=code&client_id=nO4zPv9ENUFZlmOf2jHuaNB8FwVIMqYh&redirect_uri=https://127.0.0.1:5000/authenticate&scope=openid%20profile%20email&state=xyzABC123")
+
+
+@app.route('/authenticate')
+def authenticate():
+    code = request.args.get('code')
+    url = "https://setoapps.auth0.com/oauth/token"
+    payload = "grant_type=authorization_code&client_id=nO4zPv9ENUFZlmOf2jHuaNB8FwVIMqYh&client_secret=gLQUML4j199NYO0sDxE58Svp4-lvwoOrM9LKnrWva1Z0nCR0r7l-BgPsJI96hiuC&code=" + \
+        code+"&redirect_uri=https://127.0.0.1:5000/lists/1&audience=todo"
+    headers = {"Content-type": "application/x-www-form-urlencoded"}
+    response = requests.post(url, data=payload, headers=headers)
+    data = response.json()
+    print(data)
+    print('TOKEN HERE', data.get('access_token'))
+    token = data.get('access_token')
+    token_handling(token)
+    return redirect(url_for('get_list_todos', list_id=list_location))
+
+
+@app.route('/welcome')
+def home():
+    return render_template('home.html')
+
+
+@app.route('/logout')
+def logout():
+    # Clear session stored data
+    session.clear()
+    # Redirect user to logout endpoint
+    params = {'returnTo': url_for(
+        'home', _external=True), 'client_id': 'nO4zPv9ENUFZlmOf2jHuaNB8FwVIMqYh'}
+    return redirect('https://' + AUTH0_DOMAIN + '/v2/logout?' + urlencode(params))
 
 
 @app.route('/todos/<int:todo_id>', methods=['DELETE'])
@@ -169,6 +279,7 @@ def set_completed_todo(todo_id):
         db.session.close()
     return render_template('index.html')
 
+
 @app.route('/lists/<int:list_id>/set-completed', methods=['POST'])
 def set_completed_list(list_id):
     try:
@@ -179,8 +290,8 @@ def set_completed_list(list_id):
         todos = Todo.query.filter_by(list_id=list_id).all()
         todolist.completed = completed
         for todo in todos:
-            todo.completed = completed  
-            print(todos)     
+            todo.completed = completed
+            print(todos)
         db.session.commit()
     except:
         db.session.rollback()
@@ -188,22 +299,57 @@ def set_completed_list(list_id):
         db.session.close()
     return render_template('index.html')
 
+
 @app.route('/lists/<int:list_id>')
+# @requires_auth
 def get_list_todos(list_id):
+    if not session:
+        return redirect(url_for('home'))
     global list_location
     list_location = list_id
+    user=User.query.filter_by(email=session['profile']['email']).all(),
+    list_location = list_id
+    currentUserId = user[0][0].id
     print(list_location)
+    print(session["profile"])
     return render_template('index.html',
-                           user=User.query.filter_by(id=1).all(),
-                           lists=TodoList.query.order_by('id').all(),
+                           user=User.query.filter_by(
+                               email=session['profile']['email']).all(),
+                           lists=TodoList.query.filter_by(user_id = currentUserId).order_by('id').all(),
                            active_list=TodoList.query.get(list_location),
+                           userinfo=session['profile'],
+                           #   userinfo_pretty=json.dumps(
+                           #   session['jwt_payload'], indent=4),
                            todos=Todo.query.filter_by(list_id=list_id).order_by('id').all())
 
 
-@app.route('/')
-# @cross_origin()
-def index():
-    return redirect(url_for('get_list_todos', list_id=list_location))
+# Error handler
+class AuthError(Exception):
+    def __init__(self, error, status_code):
+        self.error = error
+        self.status_code = status_code
+
+
+@app.errorhandler(AuthError)
+def handle_auth_error(ex):
+    response = jsonify(ex.error)
+    response.status_code = ex.status_code
+    return response
+
+
+@app.route("/api/public")
+@cross_origin(headers=["Content-Type", "Authorization"])
+def public():
+    response = "Hello from a public endpoint! You don't need to be authenticated to see this."
+    return jsonify(message=response)
+
+
+# This needs authentication
+@app.route("/api/private")
+@cross_origin(headers=["Content-Type", "Authorization"])
+def private():
+    response = "Hello from a private endpoint! You need to be authenticated to see this."
+    return jsonify(message=response)
 
 
 def f():
@@ -216,4 +362,5 @@ def test_mytest():
 
 
 if __name__ == '__main__':
-    app.run()
+    print('RUNNING THE SERVER...')
+    app.run(ssl_context=('server_new.crt', 'server_new.key'))
