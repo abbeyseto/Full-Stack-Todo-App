@@ -163,9 +163,8 @@ def authenticate():
         code+"&redirect_uri=https://127.0.0.1:5000/lists/1&audience=todo"
     headers = {"Content-type": "application/x-www-form-urlencoded"}
     response = requests.post(url, data=payload, headers=headers)
-    reps = response.headers.json()
     data = response.json()
-    print('DATA',data, 'RESPONSE', reps)
+    print('DATA',data)
     token = data.get('access_token')
     token_handling(token)
     return redirect(url_for('get_list_todos', list_id=list_location))
