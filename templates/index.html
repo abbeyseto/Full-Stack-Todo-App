@@ -26,6 +26,11 @@
         font-size: 20px;
     }
 
+    .logout {
+        background-color: red !important;
+        cursor: pointer;
+    }
+
     .orange600 {
         color: red;
         cursor: pointer;
@@ -58,9 +63,30 @@
     .demo-list-radio {
         display: inline;
     }
-    body{
+
+    body {
         background: url("https://wallpaperaccess.com/full/1508847.jpg");
-        
+
+    }
+
+    .user {
+        font-size: 16px;
+        width: fit-content;
+    }
+
+    .page-content {
+        padding: 5%;
+        margin: 0 auto;
+        margin-top: 3%;
+        width: 80%;
+        border-radius: 10px;
+        background-color: rgba(255, 255, 255, 0.9);
+    }
+
+    .completed {
+        text-decoration: line-through !important;
+        font-style: italic;
+        color: grey;
     }
 </style>
 
@@ -88,7 +114,8 @@
                     {% for u in user %}
                     <img class="avatar" width="50%" src="{{userinfo['picture']}}" />
                     <h6 class="user" id="{{u.id}}">Welcome {{userinfo['name']}}</h6>
-                    <a class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect orange600" href="/logout">Logout</a>
+                    <a class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect logout"
+                        href="/logout">Logout</a>
                     {% endfor %}
                 </nav>
             </div>
@@ -129,11 +156,20 @@
                                             class="mdl-checkbox__input check-completed check-list"
                                             data-id="{{ list.id }}" {% if list.completed %} checked {% endif %} />
                                     </label>
-                                </span><span class="mdl-list__item-primary-content">
+                                </span>
+                                {% if list.completed %}
+                                <span class="mdl-list__item-primary-content completed">
                                     {{list.name}}
                                     <i class="material-icons delete delete-list md-18 orange600"
                                         data-id="{{ list.id }}">delete</i>
                                 </span>
+                                {% else %}
+                                <span class="mdl-list__item-primary-content">
+                                    {{list.name}}
+                                    <i class="material-icons delete delete-list md-18 orange600"
+                                        data-id="{{ list.id }}">delete</i>
+                                </span>
+                                {% endif %}
                             </li>
                             {% endfor %}
                         </a>
@@ -153,9 +189,16 @@
                         <li>
                             <input class="check-completed check-todo" data-id="{{ todo.id }}" type="checkbox"
                                 {% if todo.completed %} checked {% endif %} />
-                            {{ todo.description }}
-                            <i class="delete delete-todo material-icons md-18 orange600"
-                                data-id="{{ todo.id }}">delete</i>
+                            {% if todo.completed %}
+                            <span class="completed">{{ todo.description }}<i
+                                    class="delete delete-todo material-icons md-18 orange600"
+                                    data-id="{{ todo.id }}">delete</i>
+                            </span>
+                            {% else %}
+                            <span>{{ todo.description }}<i class="delete delete-todo material-icons md-18 orange600"
+                                    data-id="{{ todo.id }}">delete</i></span>
+
+                            {% endif %}
                         </li>
                         {% endfor %}
                     </ul>
