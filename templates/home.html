@@ -1,16 +1,71 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
+    <link rel="stylesheet" href="./material.min.css">
+    <script src="./material.min.js"></script>
+    <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-light_blue.min.css" />
+    <!-- Wide card with share menu button -->
+    <style>
+        .demo-card-wide.mdl-card {
+            width: 512px;
+            position: absolute;
+            top: 100px;
+            left: 33%;
+        }
+
+        .demo-card-wide>.mdl-card__title {
+            color: #fff;
+            height: 176px;
+            background: url("https://wallpaperaccess.com/full/1508670.jpg") center / cover;
+        }
+
+        .demo-card-wide>.mdl-card__menu {
+            color: #fff;
+
+        }
+
+        .login-box {
+            background: url("https://wallpaperaccess.com/full/1508847.jpg");
+            height: 100vh;
+            opacity: 0.2;
+        }
+
+        .mdl-card__title-text {
+            color: #000 !important;
+            font-size: xx-large;
+            font-family: cursive;
+            font-weight: 800;
+        }
+    </style>
 </head>
+
 <body>
+
     <div class="login-box auth0-box before">
-        <img src="https://i.cloudup.com/StzWWrY34s.png" />
-        <h3>Auth0 Example</h3>
-        <p>Zero friction identity infrastructure, built for developers</p>
-        <a class="btn btn-primary btn-lg btn-login btn-block" href="/login">Log In</a>
+    </div>
+    <div class="demo-card-wide mdl-card mdl-shadow--2dp">
+        <div class="mdl-card__title">
+            <h2 class="mdl-card__title-text">Welcome to ListNotes</h2>
+        </div>
+        <div class="mdl-card__supporting-text">
+            Track everything you want to remember all in one place...
+        </div>
+        <div class="mdl-card__actions mdl-card--border">
+            <a class="mdl-button mdl-button--colored mdl-js-button mdl-js-ripple-effect" href="/login">
+                Get Started
+            </a>
+        </div>
+        <div class="mdl-card__menu">
+            <button class="mdl-button mdl-button--icon mdl-js-button mdl-js-ripple-effect">
+                <i class="material-icons">share</i>
+            </button>
+        </div>
     </div>
 </body>
+
 </html>
