@@ -123,9 +123,9 @@ def token_handling(token):
     session['jwt_payload'] = userinfo
     session['profile'] = {
         'auth_id': userinfo['sub'],
-        'name': userinfo['name'],
-        'first_name': userinfo['given_name'],
-        'last_name': userinfo['family_name'],
+        'name': userinfo.get('name', "user"),
+        'first_name': userinfo.get('given_name', "user"),
+        'last_name': userinfo.get('family_name', "user"),
         'picture': userinfo['picture'],
         'email': userinfo['email'],
         'updated_at': userinfo['updated_at']

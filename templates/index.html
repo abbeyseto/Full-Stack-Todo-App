@@ -88,15 +88,91 @@
         font-style: italic;
         color: grey;
     }
+
+    .mdl-textfield {
+        width: 50% !important;
+    }
+
+    .container {
+        display: block;
+        position: relative;
+        padding-left: 40px;
+        margin-bottom: 0px;
+        cursor: pointer;
+        font-size: 20px;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+        user-select: none;
+    }
+
+    /* Hide the browser's default checkbox */
+    .container input {
+        position: absolute;
+        opacity: 0;
+        cursor: pointer;
+        height: 0;
+        width: 0;
+    }
+
+    /* Create a custom checkbox */
+    .checkmark {
+        position: absolute;
+        top: 0;
+        left: 0;
+        height: 20px;
+        width: 20px;
+        background-color: #f4ecec;
+        border: 3px solid #cccceb;
+    }
+
+    /* On mouse-over, add a grey background color */
+    .container:hover input~.checkmark {
+        background-color: #ccc;
+    }
+
+    /* When the checkbox is checked, add a blue background */
+    .container input:checked~.checkmark {
+        background-color: #2196F3;
+    }
+
+    /* Create the checkmark/indicator (hidden when not checked) */
+    .checkmark:after {
+        content: "";
+        position: absolute;
+        display: none;
+    }
+
+    /* Show the checkmark when checked */
+    .container input:checked~.checkmark:after {
+        display: block;
+    }
+
+    /* Style the checkmark/indicator */
+    .container .checkmark:after {
+        left: 6px;
+        top: 1px;
+        width: 5px;
+        height: 11px;
+        border: solid white;
+        border-width: 0 3px 3px 0;
+        -webkit-transform: rotate(45deg);
+        -ms-transform: rotate(45deg);
+        transform: rotate(45deg);
+    }
+    a {
+    color: rgb(0, 2, 3) !important;
+    text-decoration: none !important;
+}
 </style>
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Todo App</title>
-    <link rel="stylesheet" href="./material.min.css">
-    <script src="./material.min.js"></script>
     <link rel="stylesheet" href="https://fonts.googleapis.com/icon?family=Material+Icons">
+    <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-pink.min.css">
+    <!-- <script defer src="https://code.getmdl.io/1.3.0/material.min.js"></script> -->
     <link rel="stylesheet" href="https://code.getmdl.io/1.3.0/material.indigo-light_blue.min.css" />
 </head>
 
@@ -134,53 +210,50 @@
                 <!-- Your content goes here -->
 
                 <div class="lists-wrapper">
+                    <h5>Create a collection<br> of Todos Below</h5>
                     <form id="list" class="form">
                         <div class="mdl-textfield mdl-js-textfield mdl-textfield--floating-label">
                             <input type="text" id="name" name="name" required class="mdl-textfield__input">
                             <label class="mdl-textfield__label" for="name">List Item...</label>
                         </div>
-                        <!-- <input type="text" id="name" name="name" required /> -->
-                        <!-- Raised button with ripple -->
                         <input type="submit" class="mdl-button mdl-js-button mdl-button--raised mdl-js-ripple-effect"
                             value="Create" />
                     </form>
                     <div id="list-error" class="hidden">Something went wrong</div>
                     <ul class="demo-list-control mdl-list" id="lists">
                         {% for list in lists %}
-                        <a href="/lists/{{ list.id }}">
-                            <li class="mdl-list__item">
-                                <span class="mdl-list__item-secondary-action">
-                                    <label class="mdl-checkbox mdl-js-checkbox mdl-js-ripple-effect"
-                                        for="list-checkbox-1">
-                                        <input type="checkbox" id="list-checkbox-1"
-                                            class="mdl-checkbox__input check-completed check-list"
-                                            data-id="{{ list.id }}" {% if list.completed %} checked {% endif %} />
-                                    </label>
-                                </span>
-                                {% if list.completed %}
-                                <span class="mdl-list__item-primary-content completed">
-                                    {{list.name}}
-                                    <i class="material-icons delete delete-list md-18 orange600"
-                                        data-id="{{ list.id }}">delete</i>
-                                </span>
-                                {% else %}
-                                <span class="mdl-list__item-primary-content">
-                                    {{list.name}}
-                                    <i class="material-icons delete delete-list md-18 orange600"
-                                        data-id="{{ list.id }}">delete</i>
-                                </span>
-                                {% endif %}
-                            </li>
-                            {% endfor %}
+
+                        <li class="mdl-list__item">
+                            {% if list.completed %}
+                            <label class="mdl-list__item-primary-content completed container">
+                                <input type="checkbox" checked="checked"
+                                    class="mdl-checkbox__input check-completed check-list" data-id="{{ list.id }}"><a
+                                    href="/lists/{{ list.id }}">{{list.name}}</a>
+                                <span class="checkmark"></span>
+                                <i class="material-icons delete delete-list md-18 orange600"
+                                    data-id="{{ list.id }}">delete</i>
+                            </label>
+                            {% else %}
+                            <label class="mdl-list__item-primary-content container">
+                                <input type="checkbox" class="mdl-checkbox__input check-completed check-list"
+                                    data-id="{{ list.id }}"><a href="/lists/{{ list.id }}">{{list.name}}</a>
+                                <span class="checkmark"></span>
+                                <i class="material-icons delete delete-list md-18 orange600"
+                                    data-id="{{ list.id }}">delete</i>
+                            </label>
+                            {% endif %}
+                        </li>
+                        {% endfor %}
                         </a>
                     </ul>
                 </div>
                 {% if lists %}
                 <div class="todos-wrapper">
-                    <h4 id="{{active_list.id}}" class="active-list">{{ active_list.name }}</h4>
+                    <h5 id="{{active_list.id}}" class="active-list"><span>Add Todo items to
+                        </span><br><b><em>{{ active_list.name }} </em></b>List</h5>
                     <form id="todo" class="form">
                         <input type="text" id="description" name="description" required />
-                        <input type="submit" value="Create" />
+                        <input type="submit" value="Add" />
                     </form>
 
                     <div id="todo-error" class="hidden">Something went wrong</div>
