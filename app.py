@@ -20,7 +20,7 @@ import sys
 import pytest
 import http.client
 import requests
-from jose import jwt
+# from jose import jwt
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_cors import CORS, cross_origin
